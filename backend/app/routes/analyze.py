@@ -9,6 +9,10 @@ from app.services.instagram_service import (
     get_instagram_metadata
 )
 
+from app.services.vector_service import (
+    store_video_chunks
+)
+
 router = APIRouter()
 
 
@@ -24,8 +28,14 @@ def analyze_youtube(data: dict):
 
     transcript = get_youtube_transcript(url)
 
+    chunks_saved = store_video_chunks(
+        transcript,
+        "A"
+    )
+
     return {
         "metadata": metadata,
+        "chunks_saved": chunks_saved,
         "transcript_preview": transcript[:1000]
     }
 
@@ -62,6 +72,11 @@ def analyze_videos(data: dict):
         youtube_url
     )
 
+    youtube_chunks = store_video_chunks(
+    youtube_transcript,
+    "A"
+    )
+
     instagram_metadata = get_instagram_metadata(
         instagram_url
     )
@@ -69,7 +84,8 @@ def analyze_videos(data: dict):
     return {
         "video_a": {
             "metadata": youtube_metadata,
-            "transcript_preview": youtube_transcript[:1000]
+            "transcript_preview": youtube_transcript[:1000],
+            "chunks_saved": youtube_chunks
         },
         "video_b": {
             "metadata": instagram_metadata
