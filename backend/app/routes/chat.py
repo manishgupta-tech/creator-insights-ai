@@ -4,6 +4,10 @@ from app.services.vector_service import (
     search_chunks
 )
 
+from app.services.rag_service import (
+    answer_question
+)
+
 router = APIRouter()
 
 @router.get("/test-ai")
@@ -25,3 +29,12 @@ def test_search():
     )
 
     return results
+
+@router.post("/ask")
+def ask(data: dict):
+
+    question = data["question"]
+
+    return answer_question(
+        question
+    )
