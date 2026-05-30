@@ -13,6 +13,10 @@ from app.services.vector_service import (
     store_video_chunks
 )
 
+from app.services.instagram_service import (
+    get_instagram_transcript
+)
+
 router = APIRouter()
 
 
@@ -90,4 +94,22 @@ def analyze_videos(data: dict):
         "video_b": {
             "metadata": instagram_metadata
         }
+    }
+
+
+@router.post(
+    "/instagram-transcript"
+)
+def instagram_transcript(
+    data: dict
+):
+
+    transcript = (
+        get_instagram_transcript(
+            data["instagram_url"]
+        )
+    )
+
+    return {
+        "transcript": transcript[:1000]
     }
