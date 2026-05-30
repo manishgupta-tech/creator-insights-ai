@@ -6,15 +6,12 @@ from app.services.youtube_service import (
 )
 
 from app.services.instagram_service import (
-    get_instagram_metadata
+    get_instagram_metadata,
+    get_instagram_transcript
 )
 
 from app.services.vector_service import (
     store_video_chunks
-)
-
-from app.services.instagram_service import (
-    get_instagram_transcript
 )
 
 router = APIRouter()
@@ -60,54 +57,100 @@ def analyze_instagram(data: dict):
 
 
 # ==========================
-# COMBINED ANALYSIS
+# TWO VIDEO ANALYSIS
 # ==========================
 @router.post("/analyze")
 def analyze_videos(data: dict):
 
-    youtube_url = data["youtube_url"]
-    instagram_url = data["instagram_url"]
+    video_a_url = data["video_a_url"]
+    video_b_url = data["video_b_url"]
 
-    youtube_metadata = get_youtube_metadata(
-        youtube_url
+    # ==========================
+    # VIDEO A
+    # ==========================
+    metadata_a = get_youtube_metadata(
+        video_a_url
     )
 
-    youtube_transcript = get_youtube_transcript(
-        youtube_url
+    transcript_a = get_youtube_transcript(
+        video_a_url
     )
 
-    youtube_chunks = store_video_chunks(
-    youtube_transcript,
-    "A"
+    chunks_a = store_video_chunks(
+        transcript_a,
+        "A"
     )
 
-    instagram_metadata = get_instagram_metadata(
-        instagram_url
+    engagement_a = round(
+        (
+            (
+                metadata_a.get("likes", 0)
+                +
+                metadata_a.get("comments", 0)
+            )
+            /
+            max(metadata_a.get("views", 1), 1)
+        )
+        * 100,
+        2
     )
+
+    metadata_a["engagement_rate"] = engagement_a
+
+    # ==========================
+    # VIDEO B
+    # ==========================
+    metadata_b = get_youtube_metadata(
+        video_b_url
+    )
+
+    transcript_b = get_youtube_transcript(
+        video_b_url
+    )
+
+    chunks_b = store_video_chunks(
+        transcript_b,
+        "B"
+    )
+
+    engagement_b = round(
+        (
+            (
+                metadata_b.get("likes", 0)
+                +
+                metadata_b.get("comments", 0)
+            )
+            /
+            max(metadata_b.get("views", 1), 1)
+        )
+        * 100,
+        2
+    )
+
+    metadata_b["engagement_rate"] = engagement_b
 
     return {
         "video_a": {
-            "metadata": youtube_metadata,
-            "transcript_preview": youtube_transcript[:1000],
-            "chunks_saved": youtube_chunks
+            "metadata": metadata_a,
+            "chunks_saved": chunks_a,
+            "transcript_preview": transcript_a[:500]
         },
         "video_b": {
-            "metadata": instagram_metadata
+            "metadata": metadata_b,
+            "chunks_saved": chunks_b,
+            "transcript_preview": transcript_b[:500]
         }
     }
 
 
-@router.post(
-    "/instagram-transcript"
-)
-def instagram_transcript(
-    data: dict
-):
+# ==========================
+# INSTAGRAM TRANSCRIPT
+# ==========================
+@router.post("/instagram-transcript")
+def instagram_transcript(data: dict):
 
-    transcript = (
-        get_instagram_transcript(
-            data["instagram_url"]
-        )
+    transcript = get_instagram_transcript(
+        data["instagram_url"]
     )
 
     return {
